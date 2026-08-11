@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { MapPin, AlertTriangle, CheckCircle, Wifi, WifiOff } from 'lucide-react';
+import { MapPin, AlertTriangle, CheckCircle, Wifi, WifiOff, Coffee, Clock } from 'lucide-react';
 import { updateStudentLocation } from '../../services/api';
 import { GeoLocation } from '../../types';
 
@@ -13,8 +13,11 @@ export default function GeoFenceMonitor({ selectedCourseId }: Props) {
   const [alerts, setAlerts] = useState<string[]>([]);
   const [tracking, setTracking] = useState(false);
   const [absentMinutes, setAbsentMinutes] = useState(0);
+  const [breakRequested, setBreakRequested] = useState(false);
+  const [breakRemaining, setBreakRemaining] = useState(0);
   const watchRef = useRef<number | null>(null);
   const absentTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const breakTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const startTracking = () => {
     if (!navigator.geolocation) {
@@ -46,9 +49,15 @@ export default function GeoFenceMonitor({ selectedCourseId }: Props) {
       clearInterval(absentTimerRef.current);
       absentTimerRef.current = null;
     }
+    if (breakTimerRef.current) {
+      clearInterval(breakTimerRef.current);
+      breakTimerRef.current = null;
+    }
     setTracking(false);
     setStatus('idle');
     setAbsentMinutes(0);
+    setBreakRequested(false);
+    setBreakRemaining(0);
   };
 
   const sendLocation = async (loc: GeoLocation) => {
@@ -90,38 +99,63 @@ export default function GeoFenceMonitor({ selectedCourseId }: Props) {
     }
   };
 
+  const requestBreak = () => {
+    setBreakRequested(true);
+    setBreakRemaining(10); // 10 minutes
+    setAlerts(prev => [
+      '✅ Break request sent to staff. You have 10 minutes.',
+      ...prev.slice(0, 3)
+    ]);
+    
+    if (breakTimerRef.current) clearInterval(breakTimerRef.current);
+    breakTimerRef.current = setInterval(() => {
+      setBreakRemaining(prev => {
+        if (prev <= 1) {
+          clearInterval(breakTimerRef.current!);
+          setBreakRequested(false);
+          setAlerts(a => [
+            '⚠️ Your break time has expired. Return to class zone.',
+            ...a.slice(0, 3)
+          ]);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 60000);
+  };
+
   useEffect(() => () => stopTracking(), []);
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Live Location Monitor</h1>
+      <h1 className="text-2xl font-bold text-slate-900 mb-6">Live Location Monitor</h1>
 
       {/* Status Card */}
       <div className={`rounded-2xl p-6 mb-6 border-2 transition-all ${
-        status === 'inside' ? 'bg-green-50 border-green-200' :
+        status === 'inside' ? 'bg-emerald-50 border-emerald-200' :
         status === 'outside' ? 'bg-red-50 border-red-200' :
-        status === 'error' ? 'bg-yellow-50 border-yellow-200' :
-        'bg-white border-gray-200'
+        status === 'error' ? 'bg-amber-50 border-amber-200' :
+        'bg-white border-slate-200'
       }`}>
         <div className="flex items-center gap-4">
           <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${
-            status === 'inside' ? 'bg-green-100' :
+            status === 'inside' ? 'bg-emerald-100' :
             status === 'outside' ? 'bg-red-100' :
-            'bg-gray-100'
+            'bg-slate-100'
           }`}>
-            {status === 'inside' ? <CheckCircle size={28} className="text-green-600" /> :
+            {status === 'inside' ? <CheckCircle size={28} className="text-emerald-600" /> :
              status === 'outside' ? <AlertTriangle size={28} className="text-red-600" /> :
-             <MapPin size={28} className="text-gray-400" />}
+             <MapPin size={28} className="text-slate-400" />}
           </div>
           <div>
-            <p className="font-bold text-gray-900 text-lg">
+            <p className="font-bold text-slate-900 text-lg">
               {status === 'idle' ? 'Not Tracking' :
                status === 'inside' ? 'Inside Class Zone ✓' :
                status === 'outside' ? 'Outside Class Zone ⚠' :
                'Location Error'}
             </p>
             {location && (
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
                 {location.accuracy && ` · ±${Math.round(location.accuracy)}m`}
               </p>
@@ -129,6 +163,11 @@ export default function GeoFenceMonitor({ selectedCourseId }: Props) {
             {status === 'outside' && absentMinutes > 0 && (
               <p className="text-sm text-red-600 font-semibold mt-1">
                 Away for {absentMinutes} min{absentMinutes >= 10 ? ' — Marked Absent' : ''}
+              </p>
+            )}
+            {breakRequested && (
+              <p className="text-sm text-amber-600 font-semibold mt-1 flex items-center gap-1">
+                <Coffee size={14} /> Break active: {breakRemaining} min remaining
               </p>
             )}
           </div>
@@ -140,28 +179,36 @@ export default function GeoFenceMonitor({ selectedCourseId }: Props) {
         <button
           onClick={startTracking}
           disabled={tracking}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 transition"
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 transition shadow-sm"
         >
           <Wifi size={16} /> Enable location for attendance
         </button>
         <button
           onClick={stopTracking}
           disabled={!tracking}
-          className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 transition"
+          className="flex items-center gap-2 bg-slate-200 hover:bg-slate-300 text-slate-700 px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 transition"
         >
           <WifiOff size={16} /> Stop
         </button>
+        {tracking && status === 'outside' && !breakRequested && (
+          <button
+            onClick={requestBreak}
+            className="flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm"
+          >
+            <Coffee size={16} /> Request Break
+          </button>
+        )}
       </div>
 
       {/* Alerts */}
       {alerts.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
-          <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-            <AlertTriangle size={16} className="text-yellow-500" /> Alerts
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-6">
+          <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
+            <AlertTriangle size={16} className="text-amber-500" /> Alerts
           </h3>
           <div className="space-y-2">
             {alerts.map((alert, i) => (
-              <div key={i} className="bg-yellow-50 border border-yellow-100 text-yellow-800 text-sm px-4 py-2.5 rounded-xl">
+              <div key={i} className="bg-amber-50 border border-amber-100 text-amber-800 text-sm px-4 py-2.5 rounded-xl">
                 {alert}
               </div>
             ))}
@@ -169,8 +216,21 @@ export default function GeoFenceMonitor({ selectedCourseId }: Props) {
         </div>
       )}
 
-      <div className="mt-4 bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-700">
-        <strong>How it works:</strong> Your location is tracked during active class sessions. If you leave the geo-fenced area for more than 10 minutes, you will be automatically marked absent.
+      <div className="bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 rounded-2xl p-5 text-sm text-slate-700">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center shrink-0">
+            <Clock size={18} className="text-indigo-600" />
+          </div>
+          <div>
+            <p className="font-bold mb-1">How it works:</p>
+            <ul className="list-disc pl-4 space-y-1 text-slate-600">
+              <li>Your location is tracked during active class sessions</li>
+              <li>If you leave the geo-fenced area for more than 10 minutes, you will be automatically marked absent</li>
+              <li>You can request a 10-minute break when outside the zone</li>
+              <li>Staff will be notified of your break request</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   );
