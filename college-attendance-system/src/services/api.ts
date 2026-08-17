@@ -22,6 +22,9 @@ api.interceptors.response.use(
 export const login = (email: string, password: string) =>
   api.post('/auth/login', { email, password });
 
+export const register = (data: { name: string; email: string; password: string; role?: string }) =>
+  api.post('/auth/register', data);
+
 // Admin - Students
 export const getStudents = () => api.get('/admin/students');
 export const createStudent = (data: object) => api.post('/admin/students', data);
@@ -43,6 +46,12 @@ export const assignCourseToStaff = (courseId: number, staffId: number) =>
   api.post(`/admin/courses/${courseId}/assign-staff/${staffId}`);
 export const enrollStudentInCourse = (courseId: number, studentId: number) =>
   api.post(`/admin/courses/${courseId}/enroll/${studentId}`);
+
+// Admin - Calendar
+export const getAcademicCalendar = () => api.get('/admin/calendar');
+export const uploadAcademicCalendarPdf = (formData: FormData) => api.post('/admin/calendar/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+export const setAcademicDayOrder = (data: object) => api.post('/admin/calendar', data);
+export const clearAcademicDayOrder = (date: string) => api.delete('/admin/calendar', { params: { date } });
 
 // Staff
 export const getStaffProfile = () => api.get('/staff/profile');

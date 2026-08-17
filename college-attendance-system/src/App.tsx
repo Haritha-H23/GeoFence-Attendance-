@@ -45,6 +45,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<LoginPage initialMode="register" />} />
       <Route
         path="/student/*"
         element={

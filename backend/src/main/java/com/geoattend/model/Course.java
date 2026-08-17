@@ -43,6 +43,6 @@ public class Course {
     private Staff staff;
 
     @ManyToMany(mappedBy = "enrolledCourses")
-    @EqualsAndHashCode.Exclude
+    
     private Set<Student> enrolledStudents = new HashSet<>();
 }

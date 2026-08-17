@@ -25,6 +25,7 @@ public class AttendanceService {
     private final StaffRepository staffRepository;
     private final StudentRepository studentRepository;
     private final FaceService faceService;
+    private final com.geoattend.service.AcademicCalendarService academicCalendarService;
 
     @Transactional
     public SessionResponse startSession(Long staffUserId, SessionRequest req) {
@@ -48,6 +49,9 @@ public class AttendanceService {
         session.setRadiusMeters(req.getRadiusMeters() != null ? req.getRadiusMeters() : 50);
         session.setActive(true);
         session = sessionRepository.save(session);
+
+        // attach day order if configured
+        academicCalendarService.getOrderForDate(session.getDate()).ifPresent(session::setDayOrder);
 
         // Pre-create ABSENT records for all enrolled students
         for (Student student : course.getEnrolledStudents()) {
@@ -238,6 +242,7 @@ public class AttendanceService {
         r.setLongitude(s.getLongitude());
         r.setRadiusMeters(s.getRadiusMeters());
         r.setActive(s.getActive());
+        r.setDayOrder(s.getDayOrder());
         return r;
     }
 

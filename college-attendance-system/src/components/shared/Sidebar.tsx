@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Menu, X, LogOut, Shield, ChevronRight } from 'lucide-react';
+import { Menu, X, LogOut, MapPinned, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -20,27 +20,29 @@ export default function Sidebar({ items, activeTab, onTabChange, title, subtitle
   const handleLogout = () => { logout(); navigate('/login'); };
 
   const NavLinks = ({ onSelect }: { onSelect?: () => void }) => (
-    <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
+    <nav className="flex-1 space-y-1.5 overflow-y-auto px-3 py-2">
       {items.map((item) => {
         const active = activeTab === item.id;
         return (
-          <button key={item.id}
+          <button
+            key={item.id}
             onClick={() => { onTabChange(item.id); onSelect?.(); }}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group relative ${
+            className={`group flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 ${
               active
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-            }`}>
-            <span className={`shrink-0 ${active ? 'text-white' : 'text-slate-500 group-hover:text-white'}`}>
+                ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-[0_10px_24px_rgba(37,99,235,0.28)]'
+                : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+            }`}
+          >
+            <span className={`flex h-8 w-8 items-center justify-center rounded-xl ${active ? 'bg-white/12' : 'bg-slate-800 text-slate-400 group-hover:text-white'}`}>
               {item.icon}
             </span>
-            <span className="flex-1 text-left">{item.label}</span>
+            <span className="flex-1">{item.label}</span>
             {item.badge ? (
-              <span className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+              <span className="min-w-[20px] rounded-full bg-rose-500 px-1.5 py-0.5 text-center text-[10px] font-bold text-white">
                 {item.badge}
               </span>
             ) : active ? (
-              <ChevronRight size={14} className="text-indigo-200" />
+              <ChevronRight size={14} className="text-blue-100" />
             ) : null}
           </button>
         );
@@ -49,18 +51,20 @@ export default function Sidebar({ items, activeTab, onTabChange, title, subtitle
   );
 
   const UserFooter = () => (
-    <div className="p-3 border-t border-slate-800">
-      <div className="flex items-center gap-3 px-3 py-2 mb-1">
-        <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0">
+    <div className="border-t border-slate-800/80 p-3">
+      <div className="mb-2 flex items-center gap-3 rounded-2xl bg-slate-900/60 p-3">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 text-sm font-bold text-white shadow-lg shadow-blue-500/20">
           {user?.name?.charAt(0).toUpperCase()}
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-white truncate">{user?.name}</p>
-          <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-white">{user?.name}</p>
+          <p className="truncate text-[11px] text-slate-400">{user?.email}</p>
         </div>
       </div>
-      <button onClick={handleLogout}
-        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-xl transition">
+      <button
+        onClick={handleLogout}
+        className="flex w-full items-center gap-2 rounded-2xl px-3 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-rose-300"
+      >
         <LogOut size={15} /> Sign Out
       </button>
     </div>
@@ -68,62 +72,60 @@ export default function Sidebar({ items, activeTab, onTabChange, title, subtitle
 
   return (
     <>
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-60 bg-slate-900 min-h-screen shrink-0">
-        <div className="px-4 py-5 border-b border-slate-800">
+      <aside className="hidden min-h-screen w-72 shrink-0 flex-col border-r border-slate-800 bg-slate-950 md:flex">
+        <div className="border-b border-slate-800/80 px-5 py-5">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shrink-0">
-              <Shield size={18} className="text-white" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-400 to-sky-300 shadow-[0_12px_24px_rgba(37,99,235,0.38)]">
+              <MapPinned size={18} className="text-white" />
             </div>
             <div>
-              <p className="font-bold text-white text-sm leading-none">SKCET</p>
-              <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
+              <p className="text-lg font-bold tracking-tight text-white">{title || 'GeoAttend'}</p>
+              <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">{subtitle}</p>
             </div>
           </div>
         </div>
 
-        <div className="mt-2 px-3 py-2">
-          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider px-3 mb-1">Menu</p>
+        <div className="px-4 pb-2 pt-5">
+          <p className="px-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Menu</p>
         </div>
 
         <NavLinks />
         <UserFooter />
       </aside>
 
-      {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+      <div className="fixed left-0 right-0 top-0 z-50 flex items-center justify-between border-b border-slate-800 bg-slate-950 px-4 py-3 md:hidden">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-            <Shield size={15} className="text-white" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400">
+            <MapPinned size={15} className="text-white" />
           </div>
           <div>
-            <span className="font-bold text-white text-sm">SKCET</span>
-            <span className="text-slate-500 text-xs ml-1.5">{subtitle}</span>
+            <span className="text-sm font-bold text-white">{title || 'GeoAttend'}</span>
+            <span className="ml-1.5 text-[10px] uppercase tracking-[0.16em] text-slate-400">{subtitle}</span>
           </div>
         </div>
-        <button onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
-          {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+        <button
+          onClick={() => setMobileOpen(!mobileOpen)}
+          className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800 text-slate-200 transition hover:bg-slate-700"
+        >
+          {mobileOpen ? <X size={18} /> : <Menu size={18} />}
         </button>
       </div>
 
-      {/* Mobile Drawer */}
       {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-40" onClick={() => setMobileOpen(false)}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-          <div className="absolute left-0 top-0 bottom-0 w-64 bg-slate-900 flex flex-col shadow-2xl"
-            onClick={(e) => e.stopPropagation()}>
-            <div className="px-4 py-5 border-b border-slate-800 flex items-center gap-3">
-              <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center">
-                <Shield size={18} className="text-white" />
+        <div className="fixed inset-0 z-40 md:hidden" onClick={() => setMobileOpen(false)}>
+          <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" />
+          <div className="absolute left-0 top-0 bottom-0 w-72 border-r border-slate-800 bg-slate-950 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 border-b border-slate-800 px-4 py-5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400">
+                <MapPinned size={18} className="text-white" />
               </div>
               <div>
-                <p className="font-bold text-white text-sm">SKCET</p>
-                <p className="text-xs text-slate-500">{subtitle}</p>
+                <p className="text-sm font-bold text-white">{title || 'GeoAttend'}</p>
+                <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">{subtitle}</p>
               </div>
             </div>
-            <div className="mt-2 px-3 py-2">
-              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider px-3 mb-1">Menu</p>
+            <div className="px-4 pb-2 pt-5">
+              <p className="px-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Menu</p>
             </div>
             <NavLinks onSelect={() => setMobileOpen(false)} />
             <UserFooter />

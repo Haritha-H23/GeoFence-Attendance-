@@ -37,6 +37,6 @@ public class Staff {
     private String phone;
 
     @OneToMany(mappedBy = "staff")
-    @EqualsAndHashCode.Exclude
+    
     private Set<Course> assignedCourses = new HashSet<>();
 }

@@ -79,6 +79,13 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- PDF parsing for calendar uploads -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>2.0.29</version>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

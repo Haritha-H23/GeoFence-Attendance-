@@ -102,6 +102,7 @@ public class AppDtos {
         private Double longitude;
         private Integer radiusMeters;
         private Boolean active;
+        private Integer dayOrder;
     }
 
     @Data

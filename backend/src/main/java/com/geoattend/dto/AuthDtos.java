@@ -11,6 +11,14 @@ public class AuthDtos {
     }
 
     @Data
+    public static class RegisterRequest {
+        private String name;
+        private String email;
+        private String password;
+        private String role;
+    }
+
+    @Data
     public static class LoginResponse {
         private UserDto user;
         private String token;

@@ -41,6 +41,9 @@ public class AttendanceSession {
     @Column(nullable = false)
     private Integer radiusMeters = 50;
 
+    // Academic day order for the session (1-5)
+    private Integer dayOrder;
+
     @Column(nullable = false)
     private Boolean active = true;
 

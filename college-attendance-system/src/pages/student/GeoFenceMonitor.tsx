@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { MapPin, AlertTriangle, CheckCircle, Wifi, WifiOff, Coffee, Clock } from 'lucide-react';
 import { updateStudentLocation } from '../../services/api';
+import { reverseGeocode, searchNearbyBuildings } from '../../services/googleMaps';
 import { GeoLocation } from '../../types';
 
 interface Props {
@@ -25,6 +26,7 @@ export default function GeoFenceMonitor({ selectedCourseId }: Props) {
       return;
     }
     setTracking(true);
+    try { localStorage.setItem('geoTrackingActive', '1'); } catch {}
     watchRef.current = navigator.geolocation.watchPosition(
       (pos) => {
         const loc: GeoLocation = {
@@ -55,6 +57,7 @@ export default function GeoFenceMonitor({ selectedCourseId }: Props) {
     }
     setTracking(false);
     setStatus('idle');
+    try { localStorage.removeItem('geoTrackingActive'); localStorage.setItem('geoStatus','idle'); localStorage.removeItem('geoPlace'); } catch {}
     setAbsentMinutes(0);
     setBreakRequested(false);
     setBreakRemaining(0);
@@ -68,6 +71,36 @@ export default function GeoFenceMonitor({ selectedCourseId }: Props) {
       });
       const { insideFence, message } = res.data;
       setStatus(insideFence ? 'inside' : 'outside');
+      try { localStorage.setItem('geoStatus', insideFence ? 'inside' : 'outside'); localStorage.setItem('geoCoords', JSON.stringify(loc)); } catch {}
+
+      // Attempt to resolve nearby building/place name using Google Maps
+      (async () => {
+        try {
+          const places = await searchNearbyBuildings(loc.latitude, loc.longitude, 200);
+          if (places && places.length > 0) {
+            const label = places[0].name || places[0].address || 'Nearby';
+            try { localStorage.setItem('geoPlace', label); } catch {}
+            setGeoPlace(label);
+            return;
+          }
+        } catch (e) {}
+        try {
+          const addr = await reverseGeocode(loc.latitude, loc.longitude);
+          try { localStorage.setItem('geoPlace', addr); } catch {}
+          setGeoPlace(addr);
+        } catch (e) {
+          try {
+            const osm = await (await import('../../services/googleMaps')).reverseGeocodeOSM(loc.latitude, loc.longitude);
+            try { localStorage.setItem('geoPlace', osm); } catch {}
+            setGeoPlace(osm);
+          } catch (ee) {
+            // last resort: store lat,lng
+            const latlng = `${loc.latitude.toFixed(6)}, ${loc.longitude.toFixed(6)}`;
+            try { localStorage.setItem('geoPlace', latlng); } catch {}
+            setGeoPlace(latlng);
+          }
+        }
+      })();
 
       if (!insideFence) {
         if (!absentTimerRef.current) {

@@ -47,6 +47,6 @@ public class Student {
             joinColumns = @JoinColumn(name = "student_id"),
             inverseJoinColumns = @JoinColumn(name = "course_id")
     )
-    @EqualsAndHashCode.Exclude
+    
     private Set<Course> enrolledCourses = new HashSet<>();
 }
