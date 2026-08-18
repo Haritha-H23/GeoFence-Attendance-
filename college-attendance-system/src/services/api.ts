@@ -47,12 +47,6 @@ export const assignCourseToStaff = (courseId: number, staffId: number) =>
 export const enrollStudentInCourse = (courseId: number, studentId: number) =>
   api.post(`/admin/courses/${courseId}/enroll/${studentId}`);
 
-// Admin - Calendar
-export const getAcademicCalendar = () => api.get('/admin/calendar');
-export const uploadAcademicCalendarPdf = (formData: FormData) => api.post('/admin/calendar/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-export const setAcademicDayOrder = (data: object) => api.post('/admin/calendar', data);
-export const clearAcademicDayOrder = (date: string) => api.delete('/admin/calendar', { params: { date } });
-
 // Staff
 export const getStaffProfile = () => api.get('/staff/profile');
 export const getStaffCourses = () => api.get('/staff/courses');

@@ -16,6 +16,7 @@ export default function GeoFenceMonitor({ selectedCourseId }: Props) {
   const [absentMinutes, setAbsentMinutes] = useState(0);
   const [breakRequested, setBreakRequested] = useState(false);
   const [breakRemaining, setBreakRemaining] = useState(0);
+  const [geoPlace, setGeoPlace] = useState('Current location');
   const watchRef = useRef<number | null>(null);
   const absentTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const breakTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -67,6 +68,16 @@ export default function GeoFenceMonitor({ selectedCourseId }: Props) {
     try {
       const res = await updateStudentLocation({
         ...loc,
+        locationName: await (async () => {
+          try {
+            const places = await searchNearbyBuildings(loc.latitude, loc.longitude, 200);
+            if (places && places.length > 0) return places[0].name || places[0].address || 'Current location';
+          } catch {}
+          try {
+            return await reverseGeocode(loc.latitude, loc.longitude);
+          } catch {}
+          return 'Current location';
+        })(),
         courseId: selectedCourseId ?? undefined,
       });
       const { insideFence, message } = res.data;
@@ -170,6 +181,10 @@ export default function GeoFenceMonitor({ selectedCourseId }: Props) {
         status === 'error' ? 'bg-amber-50 border-amber-200' :
         'bg-white border-slate-200'
       }`}>
+        <div className="mb-4 flex items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-2 text-xs font-medium text-indigo-700">
+          <MapPin size={14} />
+          <span>{geoPlace}</span>
+        </div>
         <div className="flex items-center gap-4">
           <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${
             status === 'inside' ? 'bg-emerald-100' :

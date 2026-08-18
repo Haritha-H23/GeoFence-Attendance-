@@ -1,15 +1,12 @@
 package com.geoattend.controller;
 
-import com.geoattend.model.AcademicDayOrder;
-import com.geoattend.service.AcademicCalendarService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
-import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/calendar")
@@ -17,29 +14,23 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminCalendarController {
 
-    private final AcademicCalendarService calendarService;
-
     @GetMapping
-    public ResponseEntity<List<AcademicDayOrder>> list() {
-        return ResponseEntity.ok(calendarService.listAll());
+    public ResponseEntity<Map<String, String>> list() {
+        return ResponseEntity.status(HttpStatus.GONE).body(Map.of("message", "Academic calendar feature has been removed."));
     }
 
     @PostMapping
-    public ResponseEntity<AcademicDayOrder> set(@RequestBody java.util.Map<String, Object> body) {
-        String date = (String) body.get("date");
-        Integer order = (Integer) body.get("dayOrder");
-        LocalDate d = LocalDate.parse(date);
-        return ResponseEntity.ok(calendarService.setDayOrder(d, order));
+    public ResponseEntity<Map<String, String>> set(@RequestBody Map<String, Object> body) {
+        return ResponseEntity.status(HttpStatus.GONE).body(Map.of("message", "Academic calendar feature has been removed."));
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<List<AcademicDayOrder>> upload(@RequestParam("file") MultipartFile file) {
-        return ResponseEntity.ok(calendarService.uploadAndParsePdf(file));
+    public ResponseEntity<Map<String, String>> upload(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        return ResponseEntity.status(HttpStatus.GONE).body(Map.of("message", "Academic calendar feature has been removed."));
     }
 
     @DeleteMapping
-    public ResponseEntity<Void> clear(@RequestParam("date") String date) {
-        calendarService.clearDayOrder(LocalDate.parse(date));
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Map<String, String>> clear(@RequestParam("date") String date) {
+        return ResponseEntity.status(HttpStatus.GONE).body(Map.of("message", "Academic calendar feature has been removed."));
     }
 }

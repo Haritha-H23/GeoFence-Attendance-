@@ -38,6 +38,9 @@ public class AttendanceSession {
     @Column(nullable = false)
     private Double longitude;
 
+    @Column(length = 255)
+    private String locationName;
+
     @Column(nullable = false)
     private Integer radiusMeters = 50;
 

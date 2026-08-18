@@ -38,7 +38,7 @@ export async function detectFacesFromCanvas(canvas: HTMLCanvasElement) {
  * Detect all faces in a live video element.
  * Returns array of detections with landmarks + 128-float descriptors.
  */
-export async function detectFaces(video: HTMLVideoElement) {
+export async function detectFaces(video: HTMLVideoElement): Promise<any[]> {
   await loadFaceModels();
 
   const canvas = document.createElement('canvas');
@@ -47,10 +47,9 @@ export async function detectFaces(video: HTMLVideoElement) {
 
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   if (!ctx) {
-    return [] as Awaited<ReturnType<typeof detectFaces>>;
+    return [];
   }
 
-  // draw frame to canvas snapshot for stable detection and faster readback
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
   return faceapi
@@ -92,7 +91,7 @@ export async function getSingleFaceDescriptor(
  */
 export function drawDetections(
   canvas: HTMLCanvasElement,
-  detections: Awaited<ReturnType<typeof detectFaces>>,
+  detections: any[],
   displaySize: { width: number; height: number }
 ) {
   faceapi.matchDimensions(canvas, displaySize);
@@ -102,7 +101,7 @@ export function drawDetections(
   if (!ctx) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  resized.forEach((d) => {
+  resized.forEach((d: any) => {
     const { x, y, width, height } = d.detection.box;
     const score = Math.round(d.detection.score * 100);
 

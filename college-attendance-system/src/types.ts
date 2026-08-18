@@ -60,6 +60,7 @@ export interface AttendanceRecord {
   markedAt?: string;
   geoVerified: boolean;
   faceVerified: boolean;
+  locationName?: string;
   absentMinutes?: number;
 }
 
@@ -74,6 +75,7 @@ export interface AttendanceSession {
   latitude: number;
   longitude: number;
   radiusMeters: number;
+  locationName?: string;
   active: boolean;
   records: AttendanceRecord[];
 }
@@ -82,6 +84,7 @@ export interface GeoLocation {
   latitude: number;
   longitude: number;
   accuracy?: number;
+  address?: string;
 }
 
 export interface LocationAlert {

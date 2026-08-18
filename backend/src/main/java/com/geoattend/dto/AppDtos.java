@@ -88,6 +88,7 @@ public class AppDtos {
         private Double latitude;
         private Double longitude;
         private Integer radiusMeters;
+        private String locationName;
     }
 
     @Data
@@ -100,6 +101,7 @@ public class AppDtos {
         private String startTime;
         private Double latitude;
         private Double longitude;
+        private String locationName;
         private Integer radiusMeters;
         private Boolean active;
         private Integer dayOrder;
@@ -117,6 +119,7 @@ public class AppDtos {
         private LocalDateTime markedAt;
         private Boolean geoVerified;
         private Boolean faceVerified;
+        private String locationName;
     }
 
     @Data
@@ -125,6 +128,7 @@ public class AppDtos {
         private Double longitude;
         private Double accuracy;
         private Long courseId;
+        private String locationName;
     }
 
     @Data

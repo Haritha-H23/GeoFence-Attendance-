@@ -35,6 +35,9 @@ public class AttendanceRecord {
     @Column(nullable = false)
     private Boolean faceVerified = false;
 
+    @Column(length = 512)
+    private String locationName;
+
     private Integer absentMinutes = 0;
 
     public enum Status {

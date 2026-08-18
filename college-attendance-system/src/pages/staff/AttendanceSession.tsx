@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { MapPin, Play, Square, CheckCircle, XCircle, Clock, Camera, ShieldCheck, AlertTriangle, Users, Coffee, Bell, ChevronDown, ChevronUp, Building2, Map } from 'lucide-react';
+import { MapPin, Play, Square, CheckCircle, XCircle, Clock, Camera, ShieldCheck, AlertTriangle, Users, Coffee, Bell, ChevronDown, ChevronUp } from 'lucide-react';
 import { startAttendanceSession, endAttendanceSession, getSessionAttendance, updateStudentAttendance, uploadClassPhoto } from '../../services/api';
-import { Course, AttendanceRecord, GeoLocation, CAMPUS_LOCATIONS } from '../../types';
+import { reverseGeocode } from '../../services/googleMaps';
+import { Course, AttendanceRecord, GeoLocation } from '../../types';
 
 interface Props { courses: Course[]; preSelectedCourse: Course | null; }
 type Step = 'setup' | 'location' | 'face' | 'active';
@@ -23,7 +24,6 @@ export default function AttendanceSession({ courses, preSelectedCourse }: Props)
   const [faceCaptureCount, setFaceCaptureCount] = useState(0);
   const [streaming, setStreaming] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [selectedCampusLocation, setSelectedCampusLocation] = useState<typeof CAMPUS_LOCATIONS[0] | null>(null);
   const [breaks, setBreaks] = useState<BreakRecord[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [showAlerts, setShowAlerts] = useState(false);
@@ -45,13 +45,13 @@ export default function AttendanceSession({ courses, preSelectedCourse }: Props)
       if (!blob) return;
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setPreviewUrl(URL.createObjectURL(blob));
-      setFaceCaptureDone(true);
+      setFaceCaptureDone(false);
     }, 'image/jpeg', 0.92);
   };
 
   useEffect(() => { if (preSelectedCourse) setSelectedCourse(String(preSelectedCourse.id)); }, [preSelectedCourse]);
 
-  const requestLocation = () => {
+  const requestLocation = async () => {
     setLocationError('');
     setLoading(true);
     if (!navigator.geolocation) {
@@ -60,9 +60,14 @@ export default function AttendanceSession({ courses, preSelectedCourse }: Props)
       return;
     }
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         const loc = { latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy };
-        setLocation(loc);
+        try {
+          const placeName = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+          setLocation({ ...loc, address: placeName });
+        } catch {
+          setLocation(loc);
+        }
         setLoading(false);
         setStep('face');
       },
@@ -121,11 +126,19 @@ export default function AttendanceSession({ courses, preSelectedCourse }: Props)
       const formData = new FormData();
       formData.append('photo', blob, 'class-photo.jpg');
       const res = await uploadClassPhoto(activeSessionId, formData);
-      const detected = res.data?.detectedCount ?? 0;
+
+      console.log("FACE MATCH RESPONSE:", res.data);
+
+      const detected = Number(res.data?.detectedCount ?? res.data?.detected_count ?? 0);
+      const matched = Number(res.data?.matchedIds?.length ?? 0);
       setFaceCaptureCount(detected);
+      
+      console.log(`Face detection result: Detected ${detected} faces, Matched ${matched} students`);
+      
       setFaceCaptureDone(true);
     } catch (error) {
       console.error('Failed to upload class photo', error);
+      setFaceCaptureDone(true);
     }
   };
 
@@ -133,12 +146,14 @@ export default function AttendanceSession({ courses, preSelectedCourse }: Props)
     if (!selectedCourse || !location) return;
     setLoading(true);
     try {
-      const finalLocation = selectedCampusLocation ? { latitude: selectedCampusLocation.lat, longitude: selectedCampusLocation.lng } : location;
+      const finalLocation = location;
+      const locationName = location?.address || 'Current location';
       const res = await startAttendanceSession({
         courseId: Number(selectedCourse),
         latitude: finalLocation.latitude,
         longitude: finalLocation.longitude,
         radiusMeters: radius,
+        locationName,
       });
       const newSessionId = res.data.id;
       setSessionId(newSessionId);
@@ -314,22 +329,9 @@ export default function AttendanceSession({ courses, preSelectedCourse }: Props)
             <h2 className="text-lg font-bold text-slate-900 mb-2">Enable Location Access</h2>
             <p className="text-slate-500 text-sm mb-2">Your current location will be used as the geo-fence center for this session.</p>
             <p className="text-slate-400 text-xs mb-6">Students must stay within <strong>{radius}m</strong> of this location throughout the class.</p>
-
-            {/* Campus Location Presets */}
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-3">
-                <Building2 size={16} className="text-slate-400" />
-                <p className="text-sm font-medium text-slate-600">Or select a campus location:</p>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {CAMPUS_LOCATIONS.map((loc) => (
-                  <button key={loc.label} onClick={() => setSelectedCampusLocation(loc)}
-                    className={`px-3 py-2 rounded-xl text-xs font-medium transition ${selectedCampusLocation?.label === loc.label ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
-                    {loc.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+            {location?.address && (
+              <p className="text-xs text-indigo-600 font-medium mb-4">Exact location: {location.address}</p>
+            )}
 
             {locationError && (
               <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3 mb-4 text-left">
@@ -357,7 +359,7 @@ export default function AttendanceSession({ courses, preSelectedCourse }: Props)
           <h2 className="font-semibold text-slate-800 mb-1">Face Scan — Capture Class</h2>
           <p className="text-xs text-slate-500 mb-4">
             Take a photo of the class to detect and count students present.
-            Location locked at: <span className="font-mono text-indigo-600">{selectedCampusLocation?.label || `${location?.latitude.toFixed(5)}, ${location?.longitude.toFixed(5)}`}</span>
+            Location locked at: <span className="font-mono text-indigo-600">{location?.address || `${location?.latitude.toFixed(5)}, ${location?.longitude.toFixed(5)}`}</span>
           </p>
 
           <div className="relative bg-slate-900 rounded-xl overflow-hidden mb-4 aspect-video max-w-lg">
@@ -401,11 +403,13 @@ export default function AttendanceSession({ courses, preSelectedCourse }: Props)
           </div>
 
           {faceCaptureDone && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-4 flex items-center gap-3">
+            <div className="border rounded-xl p-4 mb-4 flex items-center gap-3 bg-emerald-50 border-emerald-200">
               <ShieldCheck size={20} className="text-emerald-600 shrink-0" />
-              <div>
-                <p className="text-sm font-semibold text-emerald-800">Photo captured — ready to start session</p>
-                <p className="text-xs text-emerald-600">Face matching will run when the session starts.</p>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-emerald-800">
+                  {faceCaptureCount > 0 ? `Photo captured — ${faceCaptureCount} face${faceCaptureCount === 1 ? '' : 's'} detected` : 'Photo captured and ready to start the session'}
+                </p>
+                <p className="text-xs text-emerald-600">Google Maps location and class capture are now locked for this session.</p>
               </div>
               {previewUrl && <img src={previewUrl} className="ml-auto h-16 rounded-lg object-cover" alt="preview" />}
             </div>
@@ -452,12 +456,18 @@ export default function AttendanceSession({ courses, preSelectedCourse }: Props)
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5 text-sm text-slate-600">
                 <MapPin size={14} className="text-indigo-500" />
-                {selectedCampusLocation?.label || `${location?.latitude.toFixed(5)}, ${location?.longitude.toFixed(5)}`} · {radius}m radius
+                {location?.address || `${location?.latitude.toFixed(5)}, ${location?.longitude.toFixed(5)}`} · {radius}m radius
               </div>
               {faceCaptureDone && (
-                <div className="flex items-center gap-1.5 text-sm text-slate-600">
-                  <Camera size={14} className="text-emerald-500" />
-                  {faceCaptureCount} detected
+                <div className={`flex items-center gap-1.5 text-sm ${
+                  faceCaptureCount > 0 
+                    ? 'text-slate-600' 
+                    : 'text-amber-600 font-semibold'
+                }`}>
+                  <Camera size={14} className={faceCaptureCount > 0 ? 'text-emerald-500' : 'text-amber-500'} />
+                  {faceCaptureCount > 0 
+                    ? `${faceCaptureCount} detected` 
+                    : '⚠ 0 detected - manual marking needed'}
                 </div>
               )}
               {activeBreaks > 0 && (
@@ -537,6 +547,7 @@ export default function AttendanceSession({ courses, preSelectedCourse }: Props)
                   <thead className="bg-slate-50">
                     <tr>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500">Student</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500">Location</th>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500">Status</th>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500">Verified By</th>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500">Actions</th>
@@ -548,6 +559,11 @@ export default function AttendanceSession({ courses, preSelectedCourse }: Props)
                       return (
                         <tr key={r.id} className="hover:bg-slate-50">
                           <td className="px-4 py-3 font-medium text-slate-800">{r.studentName}</td>
+                          <td className="px-4 py-3">
+                            <div className="max-w-[220px] truncate text-xs text-slate-600" title={r.locationName || 'Current location'}>
+                              {r.locationName || 'Current location'}
+                            </div>
+                          </td>
                           <td className="px-4 py-3">
                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${
                               r.status === 'PRESENT' ? 'bg-emerald-50 text-emerald-700' :

@@ -7,8 +7,6 @@ import GoogleMapSelector from '../../components/maps/GoogleMapSelector';
 import ManageStudents from './ManageStudents';
 import ManageStaff from './ManageStaff';
 import ManageCourses from './ManageCourses';
-import AcademicCalendar from '../../components/shared/AcademicCalendar';
-import { uploadAcademicCalendarPdf, getAcademicCalendar } from '../../services/api';
 import { getStudents, getStaffs, getCourses } from '../../services/api';
 
 const navItems = [
@@ -79,29 +77,13 @@ export default function AdminDashboard() {
               <div className="soft-card p-6">
                 <div className="mb-4 flex items-center justify-between">
                   <div>
-                    <h2 className="text-xl font-bold text-slate-900">Academic Calendar & Day Order</h2>
-                    <p className="mt-1 text-xs text-slate-500">Manage academic days (Day order 1–5). Persisted locally.</p>
+                    <h2 className="text-xl font-bold text-slate-900">Operations summary</h2>
+                    <p className="mt-1 text-xs text-slate-500">Attendance and location health across the system.</p>
                   </div>
                   <BarChart2 size={20} className="text-blue-500" />
                 </div>
-                <AcademicCalendar />
-                <div className="mt-4 border-t pt-4">
-                  <h4 className="text-sm font-semibold mb-2">Upload academic calendar (PDF)</h4>
-                  <div className="flex items-center gap-3">
-                    <input id="calendarPdf" type="file" accept="application/pdf" className="text-sm" />
-                    <button onClick={async () => {
-                      const el = document.getElementById('calendarPdf') as HTMLInputElement | null;
-                      if (!el || !el.files || el.files.length === 0) return;
-                      const f = el.files[0];
-                      const fd = new FormData(); fd.append('file', f);
-                      try {
-                        const res = await uploadAcademicCalendarPdf(fd);
-                        // refresh counts or calendar by notifying the page (simple reload)
-                        await getAcademicCalendar();
-                        alert('Calendar parsed and updated.');
-                      } catch (e) { console.error(e); alert('Failed to upload PDF'); }
-                    }} className="px-3 py-1 rounded-lg bg-indigo-600 text-white text-sm">Upload & Parse</button>
-                  </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                  Academic calendar upload has been removed from the app. Attendance and location tracking remain active.
                 </div>
               </div>
 

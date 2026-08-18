@@ -3,4 +3,9 @@ flask==3.0.3
 numpy>=1.24.0
 Pillow>=10.0.0
 opencv-python-headless>=4.8.0
+opencv-python>=4.8.0
 tf-keras>=2.16.0
+# Additional detectors support
+mtcnn>=0.1.1
+retina-face>=0.0.13
+mediapipe>=0.8.9

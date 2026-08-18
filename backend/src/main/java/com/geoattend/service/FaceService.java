@@ -103,12 +103,11 @@ public class FaceService {
      * Sends the class photo image to Python service along with all registered student encodings.
      * Python does the detection + matching and returns matched student IDs.
      */
-    public List<Long> matchFacesFromImage(MultipartFile classPhoto, Long sessionCourseId) {
+    public FaceMatchResult matchFacesFromImage(MultipartFile classPhoto, Long sessionCourseId) {
         List<FaceDescriptor> allRegistered = faceDescriptorRepository.findAll();
-        if (allRegistered.isEmpty()) return List.of();
+        if (allRegistered.isEmpty()) return new FaceMatchResult(List.of(), 0);
 
         try {
-            // Build students JSON: [{"id": 1, "encoding": [...]}, ...]
             List<Map<String, Object>> students = allRegistered.stream().map(fd -> {
                 double[] vals = Arrays.stream(fd.getDescriptor().split(","))
                         .mapToDouble(Double::parseDouble).toArray();
@@ -137,11 +136,34 @@ public class FaceService {
 
             JsonNode root = objectMapper.readTree(response.getBody());
             List<Long> matched = new ArrayList<>();
-            root.get("matched_ids").forEach(n -> matched.add(n.asLong()));
-            return matched;
+            if (root.has("matched_ids") && root.get("matched_ids") != null && !root.get("matched_ids").isNull()) {
+                root.get("matched_ids").forEach(n -> matched.add(n.asLong()));
+            }
+            int detectedCount = root.has("detected_count") && !root.get("detected_count").isNull()
+                    ? root.get("detected_count").asInt(0)
+                    : matched.size();
+            return new FaceMatchResult(matched, detectedCount);
 
         } catch (Exception e) {
             throw new RuntimeException("Face matching failed: " + e.getMessage(), e);
+        }
+    }
+
+    public static class FaceMatchResult {
+        private final List<Long> matchedIds;
+        private final int detectedCount;
+
+        public FaceMatchResult(List<Long> matchedIds, int detectedCount) {
+            this.matchedIds = matchedIds;
+            this.detectedCount = detectedCount;
+        }
+
+        public List<Long> getMatchedIds() {
+            return matchedIds;
+        }
+
+        public int getDetectedCount() {
+            return detectedCount;
         }
     }
 }

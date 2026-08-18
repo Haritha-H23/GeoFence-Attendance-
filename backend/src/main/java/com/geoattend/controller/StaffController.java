@@ -90,11 +90,15 @@ public class StaffController {
     }
 
     @PostMapping("/attendance/{sessionId}/photo")
-    public ResponseEntity<java.util.Map<String, Integer>> uploadPhoto(
+    public ResponseEntity<java.util.Map<String, Object>> uploadPhoto(
             @PathVariable Long sessionId,
             @RequestParam("photo") MultipartFile photo) {
         int detectedCount = attendanceService.markAttendanceByFace(sessionId, photo);
-        return ResponseEntity.ok(java.util.Map.of("detectedCount", detectedCount));
+        return ResponseEntity.ok(java.util.Map.of(
+                "detectedCount", detectedCount,
+                "detected_count", detectedCount,
+                "matchedIds", java.util.List.of()
+        ));
     }
 
     private Staff getStaff(Principal principal) {

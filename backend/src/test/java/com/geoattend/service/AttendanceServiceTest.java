@@ -1,7 +1,9 @@
 package com.geoattend.service;
 
+import com.geoattend.dto.AppDtos.LocationRequest;
 import com.geoattend.model.AttendanceRecord;
 import com.geoattend.model.AttendanceSession;
+import com.geoattend.model.Course;
 import com.geoattend.model.Student;
 import com.geoattend.repository.AttendanceRecordRepository;
 import com.geoattend.repository.AttendanceSessionRepository;
@@ -113,5 +115,44 @@ class AttendanceServiceTest {
         attendanceService.markAttendanceByFace(3L, null);
 
         assertEquals(AttendanceRecord.Status.ABSENT, record.getStatus());
+    }
+
+    @Test
+    void verifyStudentLocation_storesResolvedPlaceName_onRecord() {
+        AttendanceSession session = new AttendanceSession();
+        session.setId(9L);
+        session.setLatitude(12.9716);
+        session.setLongitude(77.5946);
+        session.setRadiusMeters(50);
+        session.setActive(true);
+
+        Course course = new Course();
+        course.setId(7L);
+
+        Student student = new Student();
+        student.setId(90L);
+        student.setEnrolledCourses(new java.util.HashSet<>(List.of(course)));
+
+        AttendanceRecord record = new AttendanceRecord();
+        record.setSession(session);
+        record.setStudent(student);
+        record.setGeoVerified(false);
+        record.setFaceVerified(false);
+        record.setStatus(AttendanceRecord.Status.ABSENT);
+
+        LocationRequest req = new LocationRequest();
+        req.setLatitude(12.9717);
+        req.setLongitude(77.5947);
+        req.setCourseId(7L);
+        req.setAccuracy(5.0);
+        req.setLocationName("SKCET Food Court");
+
+        when(studentRepository.findByUserId(55L)).thenReturn(Optional.of(student));
+        when(sessionRepository.findByCourseAndActiveTrue(course)).thenReturn(Optional.of(session));
+        when(recordRepository.findBySessionAndStudent(session, student)).thenReturn(Optional.of(record));
+
+        attendanceService.verifyStudentLocation(55L, req);
+
+        assertEquals("SKCET Food Court", record.getLocationName());
     }
 }

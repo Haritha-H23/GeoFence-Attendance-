@@ -46,6 +46,7 @@ public class AttendanceService {
         session.setStartTime(LocalTime.now());
         session.setLatitude(req.getLatitude());
         session.setLongitude(req.getLongitude());
+        session.setLocationName(req.getLocationName() != null ? req.getLocationName() : "Current location");
         session.setRadiusMeters(req.getRadiusMeters() != null ? req.getRadiusMeters() : 50);
         session.setActive(true);
         session = sessionRepository.save(session);
@@ -83,9 +84,10 @@ public class AttendanceService {
     @Transactional
     public int markAttendanceByFace(Long sessionId, MultipartFile classPhoto) {
         AttendanceSession session = sessionRepository.findById(sessionId).orElseThrow();
-        List<Long> matchedStudentIds = (classPhoto != null && !classPhoto.isEmpty())
+        FaceService.FaceMatchResult matchResult = (classPhoto != null && !classPhoto.isEmpty())
                 ? faceService.matchFacesFromImage(classPhoto, session.getCourse().getId())
-                : List.of();
+                : new FaceService.FaceMatchResult(List.of(), 0);
+        List<Long> matchedStudentIds = matchResult.getMatchedIds();
         var matchedStudentIdSet = new HashSet<>(matchedStudentIds);
 
         List<AttendanceRecord> records = recordRepository.findBySession(session);
@@ -102,7 +104,7 @@ public class AttendanceService {
             }
             recordRepository.save(record);
         }
-        return matchedStudentIds.size();
+        return matchResult.getDetectedCount();
     }
 
     public List<AttendanceRecordResponse> getSessionRecords(Long sessionId) {
@@ -163,6 +165,12 @@ public class AttendanceService {
                     r.setStudent(student);
                     return r;
                 });
+
+        if (req.getLocationName() != null && !req.getLocationName().isBlank()) {
+            record.setLocationName(req.getLocationName());
+        } else if (activeSession.getLocationName() != null && !activeSession.getLocationName().isBlank()) {
+            record.setLocationName(activeSession.getLocationName());
+        }
 
         if (inside) {
             record.setGeoVerified(true);
@@ -241,6 +249,7 @@ public class AttendanceService {
         r.setLatitude(s.getLatitude());
         r.setLongitude(s.getLongitude());
         r.setRadiusMeters(s.getRadiusMeters());
+        r.setLocationName(s.getLocationName());
         r.setActive(s.getActive());
         r.setDayOrder(s.getDayOrder());
         return r;
@@ -258,6 +267,7 @@ public class AttendanceService {
         res.setMarkedAt(r.getMarkedAt());
         res.setGeoVerified(r.getGeoVerified());
         res.setFaceVerified(r.getFaceVerified());
+        res.setLocationName(r.getLocationName() != null ? r.getLocationName() : r.getSession().getLocationName());
         return res;
     }
 }
