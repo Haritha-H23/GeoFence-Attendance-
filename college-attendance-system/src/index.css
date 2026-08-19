@@ -1,0 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import 'leaflet/dist/leaflet.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-slate-100 text-slate-900 antialiased;
+    font-family: 'Inter', sans-serif;
+    background-image: radial-gradient(circle at top left, rgba(59, 130, 246, 0.09), transparent 24%),
+      radial-gradient(circle at top right, rgba(14, 165, 233, 0.08), transparent 22%);
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+
+  #root {
+    @apply min-h-screen;
+  }
+}
+
+:root {
+  --background: 210 40% 98%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 221 83% 53%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222 47% 11%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 199 89% 49%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 221 83% 53%;
+  --radius: 1.25rem;
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply border border-white/20 bg-white/70 backdrop-blur-xl shadow-[0_20px_45px_rgba(15,23,42,0.08)];
+  }
+
+  .soft-card {
+    @apply rounded-[24px] border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.05)];
+  }
+
+  .brand-gradient {
+    @apply bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-400;
+  }
+
+  .brand-gradient-soft {
+    @apply bg-gradient-to-br from-blue-50 via-sky-50 to-cyan-50;
+  }
+
+  .map-grid {
+    background-image:
+      linear-gradient(rgba(148, 163, 184, 0.18) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.18) 1px, transparent 1px);
+    background-size: 26px 26px;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(148, 163, 184, 0.12);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(71, 85, 105, 0.45);
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.92); opacity: 0.75; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+.live-pulse {
+  position: relative;
+}
+
+.live-pulse::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: rgba(34, 197, 94, 0.25);
+  animation: pulse-ring 1.6s ease-out infinite;
+}
+
+.card-hover {
+  @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_38px_rgba(37,99,235,0.12)];
+}
