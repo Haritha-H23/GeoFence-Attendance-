@@ -1,5 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+<<<<<<< HEAD
 @import 'leaflet/dist/leaflet.css';
+=======
+>>>>>>> 2ff4898e648de7eafa85b9492fb899cc39d82065
 
 @tailwind base;
 @tailwind components;

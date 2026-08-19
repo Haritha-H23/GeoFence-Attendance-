@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { MapPin, Play, Square, CheckCircle, XCircle, Clock, Camera, ShieldCheck, AlertTriangle, Users, Coffee, Bell, ChevronDown, ChevronUp } from 'lucide-react';
 import { startAttendanceSession, endAttendanceSession, getSessionAttendance, updateStudentAttendance, uploadClassPhoto } from '../../services/api';
-import { reverseGeocode, searchNearbyBuildings } from '../../services/googleMaps';
+import { reverseGeocode } from '../../services/googleMaps';
 import { Course, AttendanceRecord, GeoLocation } from '../../types';
 
 interface Props { courses: Course[]; preSelectedCourse: Course | null; }
@@ -63,16 +63,7 @@ export default function AttendanceSession({ courses, preSelectedCourse }: Props)
       async (pos) => {
         const loc = { latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy };
         try {
-          const placeName = await (async () => {
-            try {
-              const places = await searchNearbyBuildings(pos.coords.latitude, pos.coords.longitude, 200);
-              if (places && places.length > 0) return places[0].name || places[0].address || '';
-            } catch {}
-            try {
-              return await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
-            } catch {}
-            return '';
-          })();
+          const placeName = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
           setLocation({ ...loc, address: placeName });
         } catch {
           setLocation(loc);
@@ -156,7 +147,7 @@ export default function AttendanceSession({ courses, preSelectedCourse }: Props)
     setLoading(true);
     try {
       const finalLocation = location;
-      const locationName = location?.address || '';
+      const locationName = location?.address || 'Current location';
       const res = await startAttendanceSession({
         courseId: Number(selectedCourse),
         latitude: finalLocation.latitude,
@@ -428,10 +419,10 @@ export default function AttendanceSession({ courses, preSelectedCourse }: Props)
             <button onClick={() => { stopCamera(); setStep('location'); }} className="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 transition">
               ← Back
             </button>
-              <button onClick={confirmAndStart} disabled={loading}
-                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 transition shadow-sm">
-                <Play size={16} /> {loading ? 'Starting...' : faceCaptureDone ? 'Start Session' : 'Move to Next'}
-              </button>
+            <button onClick={confirmAndStart} disabled={loading}
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 transition shadow-sm">
+              <Play size={16} /> {loading ? 'Starting...' : faceCaptureDone ? 'Start Session' : 'Skip & Start Session'}
+            </button>
           </div>
         </div>
       )}
@@ -487,15 +478,10 @@ export default function AttendanceSession({ courses, preSelectedCourse }: Props)
               )}
             </div>
             {sessionActive ? (
-              <div className="flex items-center gap-2">
-                <button onClick={() => setStep('face')} className="flex items-center gap-2 bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-xl text-sm font-semibold transition">
-                  ← Prev
-                </button>
-                <button onClick={handleEnd} disabled={loading}
-                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50 transition shadow-sm">
-                  <Square size={14} /> {loading ? 'Ending...' : 'End Session'}
-                </button>
-              </div>
+              <button onClick={handleEnd} disabled={loading}
+                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50 transition shadow-sm">
+                <Square size={14} /> {loading ? 'Ending...' : 'End Session'}
+              </button>
             ) : (
               <span className="text-sm font-semibold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl">Session Ended</span>
             )}
@@ -574,13 +560,9 @@ export default function AttendanceSession({ courses, preSelectedCourse }: Props)
                         <tr key={r.id} className="hover:bg-slate-50">
                           <td className="px-4 py-3 font-medium text-slate-800">{r.studentName}</td>
                           <td className="px-4 py-3">
-                            {r.geoVerified ? (
-                              <div className="max-w-[220px] truncate text-xs text-slate-600" title={r.locationName || 'Current location'}>
-                                {r.locationName || 'Current location'}
-                              </div>
-                            ) : (
-                              <span className="text-xs text-slate-400">Location not enabled</span>
-                            )}
+                            <div className="max-w-[220px] truncate text-xs text-slate-600" title={r.locationName || 'Current location'}>
+                              {r.locationName || 'Current location'}
+                            </div>
                           </td>
                           <td className="px-4 py-3">
                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${

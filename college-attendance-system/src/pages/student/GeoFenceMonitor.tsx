@@ -71,12 +71,20 @@ export default function GeoFenceMonitor({ selectedCourseId }: Props) {
         locationName: await (async () => {
           try {
             const places = await searchNearbyBuildings(loc.latitude, loc.longitude, 200);
+<<<<<<< HEAD
             if (places && places.length > 0) return places[0].name || places[0].address || '';
+=======
+            if (places && places.length > 0) return places[0].name || places[0].address || 'Current location';
+>>>>>>> 2ff4898e648de7eafa85b9492fb899cc39d82065
           } catch {}
           try {
             return await reverseGeocode(loc.latitude, loc.longitude);
           } catch {}
+<<<<<<< HEAD
           return '';
+=======
+          return 'Current location';
+>>>>>>> 2ff4898e648de7eafa85b9492fb899cc39d82065
         })(),
         courseId: selectedCourseId ?? undefined,
       });
@@ -100,9 +108,22 @@ export default function GeoFenceMonitor({ selectedCourseId }: Props) {
           try { localStorage.setItem('geoPlace', addr); } catch {}
           setGeoPlace(addr);
         } catch (e) {
+<<<<<<< HEAD
           const latlng = `${loc.latitude.toFixed(6)}, ${loc.longitude.toFixed(6)}`;
           try { localStorage.setItem('geoPlace', latlng); } catch {}
           setGeoPlace(latlng);
+=======
+          try {
+            const osm = await (await import('../../services/googleMaps')).reverseGeocodeOSM(loc.latitude, loc.longitude);
+            try { localStorage.setItem('geoPlace', osm); } catch {}
+            setGeoPlace(osm);
+          } catch (ee) {
+            // last resort: store lat,lng
+            const latlng = `${loc.latitude.toFixed(6)}, ${loc.longitude.toFixed(6)}`;
+            try { localStorage.setItem('geoPlace', latlng); } catch {}
+            setGeoPlace(latlng);
+          }
+>>>>>>> 2ff4898e648de7eafa85b9492fb899cc39d82065
         }
       })();
 
@@ -195,6 +216,15 @@ export default function GeoFenceMonitor({ selectedCourseId }: Props) {
                status === 'outside' ? 'Outside Class Zone ⚠' :
                'Location Error'}
             </p>
+<<<<<<< HEAD
+=======
+            {location && (
+              <p className="text-xs text-slate-500 mt-1">
+                {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
+                {location.accuracy && ` · ±${Math.round(location.accuracy)}m`}
+              </p>
+            )}
+>>>>>>> 2ff4898e648de7eafa85b9492fb899cc39d82065
             {status === 'outside' && absentMinutes > 0 && (
               <p className="text-sm text-red-600 font-semibold mt-1">
                 Away for {absentMinutes} min{absentMinutes >= 10 ? ' — Marked Absent' : ''}

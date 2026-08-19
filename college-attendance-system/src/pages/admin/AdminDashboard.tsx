@@ -131,7 +131,7 @@ export default function AdminDashboard() {
                   <div>
                     <p className="text-sm font-semibold text-slate-900">{selectedCampus?.address || 'Campus location selected'}</p>
                     <p className="mt-1 text-xs text-slate-600">
-                      {selectedCampus ? selectedCampus.address : 'Waiting for campus selection'}
+                      {selectedCampus ? `${selectedCampus.latitude.toFixed(5)}, ${selectedCampus.longitude.toFixed(5)}` : 'Waiting for campus selection'}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
